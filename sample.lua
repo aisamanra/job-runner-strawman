@@ -5,15 +5,19 @@ register {
 	  cmd  = "run-one",
 }
 
--- a job that depends on the first one
-register {
+-- a job that depends on the first one---and is in
+-- a closure!
+function sample(msg)
+   register {
 	  name = "job two",
 	  ret  = "that",
 	  deps = { "job one" },
 	  cmd  = function (dep)
- 		 return "run-two of " .. dep
- 	  end
-}
+		 return msg .. dep
+	  end
+   }
+end
+sample("run-two of ")
 
 -- yet another job, that depends on both the
 -- other two!
