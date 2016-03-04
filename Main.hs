@@ -28,10 +28,7 @@ data Job = Job
 
 -- The result of running a job names the job it resulted
 -- from and gives a value.
-data Result = Result
-  { resultName :: String
-  , resultVal  :: String
-  }
+type Result = (String, String)
 
 -- This is a Very Bad function. In particular, if the
 -- dependency graph of jobs is ill-formed, it'll just run
@@ -41,14 +38,20 @@ runJobs l [] _ = putStrLn "done with jobs"
 runJobs l (j:js) prev
   -- if all of our dependencies appear in our 'results' list,
   -- then all dependencies have been met.
-  | and [ d `elem` map resultName prev | d <- jobDeps j] = do
+  | and [ d `elem` map fst prev | d <- jobDeps j] = do
       -- we print some nice stuff
       putStrLn ("running job `" ++ jobName j ++ "'")
-      cmd <- runCmd l (jobCmd j) (map resultVal prev)
+      -- We run the command; if it had dependencies, pass
+      -- in the results of the previous dependencies in
+      -- the order the dependencies appear.
+      cmd <- runCmd l (jobCmd j) [ r
+                                 | dep <- jobDeps j
+                                 , let Just r = lookup dep prev
+                                 ]
       putStrLn ("  command is `" ++ cmd ++ "'")
       putStrLn ("  result is `" ++ jobRet j ++ "'")
       -- and add the 'result' to the list of results
-      let res = Result (jobName j) (jobRet j)
+      let res = (jobName j, jobRet j)
       runJobs l js (res:prev)
   -- If our dependencies haven't all been met, then add the
   -- current job to the end of the list and keep trying.
